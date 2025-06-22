@@ -55,11 +55,21 @@ type AvatarProps = {
   className?: string;  // Additional CSS class names
   ariaLabel?: string;  // Optional accessibility label - describes the component's function or context
   quality?: number;    // Optional image quality (1-100), default 75. Higher value means better quality but larger file size.
-  fetchPriority?: 'high' | 'low' | 'auto'; // Optional fetch priority for finer performance control
 };
 
 /**
  * Avatar Component - Client Component
+ * 
+ * Uses Next.js <Image> component which provides several optimizations:
+ * - Automatic image resizing and format conversion (WebP/AVIF) in production
+ * - Lazy loading by default with blur-up placeholders for smooth UX
+ * - Prevents Cumulative Layout Shift (CLS) by enforcing width/height
+ * - Development vs Production behavior differences:
+ *   • Development: Images are served at full resolution without optimization for faster builds
+ *   • Production: Images are automatically optimized, resized, and converted to modern formats
+ *   • Development: Remote images may load slower due to lack of optimization pipeline
+ *   • Production: Remote images benefit from Next.js Image Optimization API with caching
+ * 
  * @param src - Image source URL, supports remote CDNs (configured in next.config.mjs)
  * @param alt - Accessibility description text
  * @param priority - Whether to load with priority (recommended for above-the-fold avatars)
@@ -75,7 +85,6 @@ const Avatar: React.FC<AvatarProps> = ({
   size = 48,
   ariaLabel,
   quality = 75,
-  // fetchPriority = 'auto'
 }) => {
   // Use the provided src or the default avatar
   const imageSrc = src || defaultAvatar;
@@ -120,6 +129,12 @@ const Avatar: React.FC<AvatarProps> = ({
       alt={alt}
       
       // required: Required properties: Prevent CLS, ensure layout stability
+      // CLS Prevention: Explicit width/height dimensions prevent Cumulative Layout Shift
+      // By providing exact dimensions, Next.js Image component:
+      // 1. Reserves the exact space in the DOM before the image loads
+      // 2. Prevents content jumping/shifting when the image appears
+      // 3. Maintains consistent layout during loading states
+      // 4. Improves Core Web Vitals score by eliminating unexpected layout shifts
       width={size}
       height={size}
       
@@ -133,6 +148,13 @@ const Avatar: React.FC<AvatarProps> = ({
       
       // Defaults to lazy. When lazy, defer loading the image until it reaches a calculated distance from the viewport.
       // loading={loadingStrategy}
+
+
+      // Blur-up Placeholder: Smooth loading transition with blurred preview
+      // placeholder="blur" enables the blur-up effect during image loading
+      // blurDataURL provides the base64-encoded low-quality placeholder image
+      // Creates a smooth visual transition from blur to sharp image
+      // Improves perceived performance and user experience during loading
       
       // User Experience: show placeholder when the image is loading
       placeholder="blur"
@@ -145,7 +167,20 @@ const Avatar: React.FC<AvatarProps> = ({
       decoding={decodingStrategy}
       
       // Custom Image Processing: Add optimization parameters for remote CDN images, with support for custom quality
+      // Automatic Image Optimization: Next.js Image component provides built-in optimization
+      // 1. Format Conversion: Automatically converts images to modern formats (WebP, AVIF) when supported by the browser
+      //    - WebP: ~25-30% smaller than JPEG with same quality, supported by 95%+ browsers
+      //    - AVIF: ~50% smaller than JPEG with same quality, supported by 90%+ browsers
+      //    - Falls back to original format for unsupported browsers
+      // 2. Automatic Resizing: Generates multiple sizes based on device pixel ratio and viewport
+      //    - Creates responsive image variants (1x, 2x, 3x) for different screen densities
+      //    - Serves appropriately sized images to reduce bandwidth usage
+      // 3. Quality Optimization: Default quality=75 provides optimal balance between file size and visual quality
+      //    - Can be customized via `quality` prop (1-100) for specific use cases
+      // 4. Lazy Loading: Images outside viewport are loaded only when needed (unless priority=true)
+      // 5. CDN Integration: Works seamlessly with image CDNs and custom loaders for advanced processing
       loader={needsProcessing ? customImageLoader : undefined}
+      // sizes={`${size}px`}
       
       // Style Control: Circular avatar and object-fit
       className="rounded-full object-cover"
