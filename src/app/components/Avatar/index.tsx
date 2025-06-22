@@ -20,21 +20,15 @@ import defaultAvatar from '../../images/default_avatar.webp';
  * @param quality - Image quality (1-100), default 75
  * @returns Processed image URL
  */
-const imageLoader = ({ src, width, quality = 75, noDPRAdapt = false }: {
+const imageLoader = ({ src, width, quality = 75 }: {
   src: string;
   width: number;
   quality?: number;
   noDPRAdapt?: boolean;
 }): string => {
-  let actualWidth: number;
-  if (noDPRAdapt && typeof window !== 'undefined') {
-    actualWidth = width / Math.round(window.devicePixelRatio);
-  } else {
-    actualWidth = width;
-  }
   
   // Build image processing parameters
-  const imageParams = `imageView2/2/w/${actualWidth}/format/webp/q/${quality}`;
+  const imageParams = `imageView2/2/w/${width}/format/webp/q/${quality}`;
   
   // Check if the URL already has query parameters
   const separator = src.includes('?') ? '&' : '?';
@@ -102,7 +96,6 @@ const Avatar: React.FC<AvatarProps> = ({
     return imageLoader({
       ...loaderParams,
       quality: quality, // Use the quality parameter passed to the component
-      noDPRAdapt: true
     });
   };
 
