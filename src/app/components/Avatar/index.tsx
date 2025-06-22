@@ -24,7 +24,6 @@ const imageLoader = ({ src, width, quality = 75 }: {
   src: string;
   width: number;
   quality?: number;
-  noDPRAdapt?: boolean;
 }): string => {
   
   // Build image processing parameters
@@ -46,7 +45,6 @@ type AvatarProps = {
   alt: string;         // Required accessibility alt text - describes the image content
   priority?: boolean;  // Whether to preload the image (recommended for avatars visible above the fold)
   size?: number;       // Optional size, default 48px
-  className?: string;  // Additional CSS class names
   ariaLabel?: string;  // Optional accessibility label - describes the component's function or context
   quality?: number;    // Optional image quality (1-100), default 75. Higher value means better quality but larger file size.
 };
@@ -68,7 +66,6 @@ type AvatarProps = {
  * @param alt - Accessibility description text
  * @param priority - Whether to load with priority (recommended for above-the-fold avatars)
  * @param size - Avatar size (px), default 48
- * @param className - Additional style class names
  * @param ariaLabel - Accessibility description text (for the role of this component or button)
  * @param quality - Image quality (1-100), default 75, only effective for remote CDN images
  */
@@ -100,7 +97,7 @@ const Avatar: React.FC<AvatarProps> = ({
   };
 
   // Check if it is a remote CDN URL (requires image processing)
-  const needsProcessing = src && src.startsWith('http') && (
+  const shouldUseCustomImageLoader = src && src.startsWith('http') && (
     src.includes('cos.ap-') ||           // Tencent Cloud COS
     src.includes('qiniu.com') ||         // Qiniu Cloud
     src.includes('oss-') ||              // Alibaba Cloud OSS
@@ -172,7 +169,7 @@ const Avatar: React.FC<AvatarProps> = ({
       //    - Can be customized via `quality` prop (1-100) for specific use cases
       // 4. Lazy Loading: Images outside viewport are loaded only when needed (unless priority=true)
       // 5. CDN Integration: Works seamlessly with image CDNs and custom loaders for advanced processing
-      loader={needsProcessing ? customImageLoader : undefined}
+      loader={shouldUseCustomImageLoader ? customImageLoader : undefined}
       // sizes={`${size}px`}
       
       // Style Control: Circular avatar and object-fit
